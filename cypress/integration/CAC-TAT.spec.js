@@ -8,6 +8,7 @@
 /// <reference types="Cypress" />
 
 describe('Central de atendimento ao Cliente TAT', function () {
+    const THREE_SECONDS_IN_MS = 3000
     beforeEach(function () { cy.visit('./src/index.html') })
 
     it('Teste0 - Verifica o título da aplicação', function () {
@@ -180,5 +181,55 @@ describe('Central de atendimento ao Cliente TAT', function () {
             .click()
         cy.contains('Talking About Testing').should('be.visible')
     })
+    it('Teste23 - Preenche os campos obrigatórios e envia o formulário, com cy.clock e cy.tick', function () {
+        const longText = 'teste, teste,teste, teste,teste, teste,teste, teste,teste, teste,teste, teste,teste, teste,teste, teste,teste, teste,teste, teste,teste, teste,teste, teste'
+        cy.clock()
+        cy.get('#firstName').type('Ana')
+        cy.get('#lastName').type('Teles')
+        cy.get('#email').type('ateles@teste.com')
+        cy.get('#open-text-area').type(longText, { delay: 0 })
+        //cy.get('button[type="submit"]').click()
+        cy.contains('button', 'Enviar').click()
+        cy.get('.success').should('be.visible')
+        cy.tick(THREE_SECONDS_IN_MS)
+        cy.get('.success').should('not.be.visible')
+    })
 
+    Cypress._.times(5, function () {
+        it('Teste24 - Campo telefone continua vazio quando preenchido com valor não numérico', function () {
+            cy.get('#phone').type('dfgdfgdf').should('have.value', '')
+        })
+    })
+
+    it('Teste25 - Exibe e esconde as mensagens de sucesso e erro usando o .invoke', () => {
+        cy.get('.success')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+            .and('contain', 'Mensagem enviada com sucesso.')
+            .invoke('hide')
+            .should('not.be.visible')
+        cy.get('.error')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+            .and('contain', 'Valide os campos obrigatórios!')
+            .invoke('hide')
+            .should('not.be.visible')
+    })
+    it('Teste26 - Preenche a área de texto usando o comando invoke', function () {
+        const longText = Cypress._.repeat('0123456789', 20)
+        cy.get('#open-text-area')
+            .invoke('val', longText)
+            .should('have.value', longText)
+    })
+    it('Teste27 - Faz uma requisição HTTP', function () {
+        cy.request('https://cac-tat.s3.eu-central-1.amazonaws.com/index.html')
+            .should(function (response) {
+                const { status, statusText, body } = response
+                expect(status).to.equal(200)
+                expect(statusText).to.equal('OK')
+                expect(body).to.include('CAC TAT')
+            })
+    })
 })
